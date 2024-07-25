@@ -3,3 +3,28 @@ name: Static Analysis
 on:
   pull_request:
     branches: [ main ]
+
+jobs:
+  static_analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17 with Gradle cache
+        uses: actions/setup-java@v2
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: "gradle"
+
+
+      - name: Execute Static Analysis
+        id: static_analysis
+        run: |
+          ./gradlew api:build sonar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

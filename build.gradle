@@ -1,0 +1,138 @@
+plugins {
+    id("java")
+    id("jacoco")
+    id("org.sonarqube")
+    id("org.springframework.boot") apply false
+    id("io.spring.dependency-management") apply false
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+allprojects {
+    repositories {
+        mavenCentral()
+        maven { url "https://repo.spring.io/release" }
+    }
+    gradle.projectsEvaluated {
+        tasks.withType(JavaCompile).tap {
+            configureEach {
+                options.compilerArgs
+            }
+        }
+    }
+}
+
+sonarqube {
+    properties {
+        property("sonar.projectKey", System.getenv("PROJECT_KEY"))
+        property("sonar.organization", System.getenv("ORGANIZATION"))
+        property("sonar.host.url", "https://sonarcloud.io")
+        property("sonar.token", System.getenv("SONAR_TOKEN"))
+        property("sonar.language", "java")
+        property("sonar.sourceEncoding", "UTF-8")
+        property("sonar.test.inclusions", "**/*Test.java")
+        property("sonar.scm.forceReloadAll", "true")
+
+        def exclusions = []
+        file("${rootDir}/config/jacoco/exclude-coverage.txt").eachLine {
+            exclusions.add(it)
+        }
+        property("sonar.exclusions", exclusions.join(", "))
+        property("sonar.java.coveragePlugin", "jacoco")
+    }
+}
+
+subprojects {
+    apply(plugin: "java")
+    apply(plugin: "jacoco")
+    apply(plugin: "org.sonarqube")
+    apply(plugin: "application")
+    apply(plugin: "java-library")
+    apply(plugin: "org.springframework.boot")
+    apply(plugin: "io.spring.dependency-management")
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencyManagement {
+        imports {
+            mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+        }
+    }
+
+    dependencies {
+        // Test
+        testImplementation("org.springframework.boot:spring-boot-starter-test")
+
+        // Lombok
+        compileOnly("org.projectlombok:lombok:${lombokVersion}")
+        annotationProcessor("org.projectlombok:lombok:${lombokVersion}")
+    }
+
+    jacocoTestReport {
+        dependsOn("test")
+        reports {
+            xml.required = true
+            html.required = false
+            csv.required = false
+            xml.destination = file("${buildDir}/reports/jacoco/test/jacocoTestReport.xml")
+        }
+        afterEvaluate {
+            def exclusions = []
+            file("${rootDir}/config/jacoco/exclude-coverage.txt").eachLine {
+                exclusions.add(it)
+            }
+            classDirectories.setFrom(files(classDirectories.files.collect {
+                fileTree(dir: it, exclude: exclusions)
+            }))
+        }
+    }
+
+    jacocoTestCoverageVerification {
+        afterEvaluate {
+            def exclusions = []
+            file("${rootDir}/config/jacoco/exclude-verification.txt").eachLine {
+                exclusions.add(it)
+            }
+            classDirectories.setFrom(files(classDirectories.files.collect {
+                fileTree(dir: it, exclude: exclusions)
+            }))
+
+            violationRules {
+                rule {
+                    enabled = true
+                    element = "CLASS"
+
+                    limit {
+                        counter = "LINE"
+                        value = "TOTALCOUNT"
+                        maximum = "200".toBigDecimal()
+                    }
+                    limit {
+                        counter = "BRANCH"
+                        value = "COVEREDRATIO"
+                        minimum = 0.3
+                    }
+                }
+            }
+        }
+    }
+
+    tasks.test {
+        useJUnitPlatform()
+        finalizedBy jacocoTestReport
+    }
+
+    sonarqube {
+        properties {
+            property("sonar.java.binaries", "${buildDir}/classes/java/main")
+            property("sonar.sources", "${projectDir}/src/main/java")
+            property 'sonar.coverage.jacoco.xmlReportPaths', "${buildDir}/reports/jacoco/test/jacocoTestReport.xml"
+        }
+    }
+}
