@@ -5,9 +5,9 @@ dependencies {
 }
 
 springBoot {
-    mainClassName = "project.dailyge.app.DailygeApplication"
+    mainClassName = "project.dailyge.app.ApiApplication"
 }
 
 test {
-    dependsOn(":storage:rdb:test")
+    finalizedBy jacocoTestReport
 }

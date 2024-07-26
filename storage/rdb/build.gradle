@@ -1,3 +1,7 @@
+test {
+    finalizedBy 'jacocoTestReport'
+}
+
 dependencies {
 }
 
