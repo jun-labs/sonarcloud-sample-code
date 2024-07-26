@@ -5,7 +5,7 @@ import lombok.Getter;
 @Getter
 public class User {
 
-    private final Long id;
+    private Long id;
     private final String name;
 
     public User(
@@ -14,5 +14,9 @@ public class User {
     ) {
         this.id = id;
         this.name = name;
+    }
+
+    public void insert(Long id) {
+        this.id = id;
     }
 }
