@@ -1,0 +1,13 @@
+dependencies {
+    implementation(project(":storage:rdb"))
+
+    implementation("org.springframework.boot:spring-boot-starter-web")
+}
+
+springBoot {
+    mainClassName = "project.dailyge.app.ApiApplication"
+}
+
+test {
+    finalizedBy jacocoTestReport
+}

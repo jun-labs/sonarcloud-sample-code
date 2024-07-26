@@ -1,0 +1,14 @@
+test {
+    finalizedBy 'jacocoTestReport'
+}
+
+dependencies {
+}
+
+jar {
+    enabled = true
+}
+
+bootJar {
+    enabled = false
+}

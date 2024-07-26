@@ -1,0 +1,30 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+        maven { url 'https://repo.spring.io/plugin-release' }
+    }
+    resolutionStrategy {
+        eachPlugin {
+            if (requested.id.id == "org.springframework.boot") {
+                useVersion springBootVersion as String
+            }
+            if (requested.id.id == "io.spring.dependency-management") {
+                useVersion springDependencyManagementVersion as String
+            }
+            if (requested.id.id == "org.sonarqube") {
+                useVersion sonarQubeVersion as String
+            }
+        }
+    }
+}
+
+gradle.projectsLoaded {
+    gradle.startParameter.maxWorkerCount = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+}
+
+rootProject.name = "sonarcloud-sample-code"
+include(
+        "api",
+        "storage:rdb",
+)
